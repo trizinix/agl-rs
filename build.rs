@@ -13,40 +13,22 @@ use bincode::{serialize, Infinite};
 
 include!("src/parser.rs");
 
-fn main() {
-    let f = File::open("agl-aglfn/glyphlist.txt").unwrap();
-    let mut b = BufReader::new(f);
-    let glyphlist = parse_glyphlist(&mut b).unwrap();
 
+fn generate_serialized_data(input_path: &str, output_path: &str) {
+    let f = File::open(input_path).unwrap();
+    let mut b = BufReader::new(f);
+    let glyphlist = parse_glyph_list(&mut b).unwrap();
 
     // Output file
     let out_dir = env::var("OUT_DIR").unwrap();
-    let dest_path = Path::new(&out_dir).join("adobe.data");
+    let dest_path = Path::new(&out_dir).join(output_path);
     let mut f = File::create(&dest_path).unwrap();
 
     f.write_all(&serialize(&glyphlist, Infinite).unwrap()).unwrap();
 }
 
-
-/*
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
-struct Entity {
-    x: f32,
-    y: f32,
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
-struct World(Vec<Entity>);
-
 fn main() {
-    let world = World(vec![Entity { x: 0.0, y: 4.0 }, Entity { x: 10.0, y: 20.5 }]);
-
-    let encoded: Vec<u8> = serialize(&world, Infinite).unwrap();
-
-    // 8 bytes for the length of the vector, 4 bytes per float.
-    assert_eq!(encoded.len(), 8 + 4 * 4);
-
-    let decoded: World = deserialize(&encoded[..]).unwrap();
-
-    assert_eq!(world, decoded);
-}*/
+    generate_serialized_data("agl-aglfn/glyphlist.txt", "adobe.data");
+    generate_serialized_data("agl-aglfn/zapfdingbats.txt", "zapfdingbats.data");
+    generate_serialized_data("assets/additional.txt", "additional.data");
+}

@@ -1,25 +1,20 @@
+#[macro_use] extern crate lazy_static;
+#[macro_use] extern crate serde_derive;
+extern crate bincode;
+
+use bincode::deserialize;
 
 mod parser;
+use parser::Glyphlist;
 
-#[derive(Debug)]
-pub struct Glyphlist {
-    names: Vec<(String, usize)>,
-    unicode: Vec<(String, usize)>
+lazy_static! {
+    static ref ADOBE: Glyphlist = {
+        let ser = include_bytes!(concat!(env!("OUT_DIR"), "/adobe.data"));
+        let list: Glyphlist = deserialize(&ser[..]).unwrap();
+        list
+    };
 }
 
-impl Glyphlist {
-    pub fn to_name(&self, unicode: &str) -> Option<&str> {
-        let pos = self.unicode.binary_search_by_key(&unicode, |&(ref c,_)| c).ok()?;
-        let name_pos = self.unicode[pos].1;
-        Some(&self.names[name_pos].0)
-    }
-
-    pub fn to_unicode(&self, name: &str) -> Option<&str> {
-        let pos = self.names.binary_search_by_key(&name, |&(ref n,_)| n).ok()?;
-        let unicode_pos = self.names[pos].1;
-        Some(&self.unicode[unicode_pos].0)
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -53,6 +48,14 @@ huhiragana;3075
         assert_eq!(glyphlist.to_unicode("ibengali"), Some("ই"));
         assert_eq!(glyphlist.to_unicode("hyphen"), Some("-"));
         assert_eq!(glyphlist.to_unicode("huhiragana"), Some("ふ"));
+    }
+
+    use super::ADOBE;
+    #[test]
+    fn test_build_rs_adobe() {
+        assert_eq!(ADOBE.to_unicode("ibengali"), Some("ই"));
+        assert_eq!(ADOBE.to_unicode("hyphen"), Some("-"));
+        assert_eq!(ADOBE.to_unicode("huhiragana"), Some("ふ"));
     }
 
 }
